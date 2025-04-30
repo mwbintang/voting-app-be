@@ -1,39 +1,43 @@
-const jwt = require('jsonwebtoken');
+const jwtHelper = require('../helpers/jwt');
 const User = require('../models/User');
-const Role = require('../models/Role');
-const Permission = require('../models/Permission');
+require('../models/Permission')
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const authMiddleware = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-const authenticate = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Missing token' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authorization header missing or invalid' });
+  }
+
+  const token = authHeader.split(' ')[1];
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(payload.userId).populate({
-      path: 'roles',
-      populate: { path: 'permissions' }
+    const decoded = jwtHelper.verifyToken(token);
+
+    // Ensure userId exists in the decoded token
+    if (!decoded.userId) {
+      return res.status(401).json({ message: 'Invalid token payload' });
+    }
+
+    // Fetch the user with their role and permissions populated
+    const user = await User.findById(decoded.userId).populate({
+      path: 'role',
+      populate: {
+        path: 'permissions',
+        model: 'Permission', // Explicitly mention model name to avoid MissingSchemaError
+      },
     });
 
-    if (!user) return res.status(401).json({ message: 'User not found' });
+    if (!user || user?.isDeleted) {
+      return res.status(401).json({ message: 'User not found' });
+    }
 
     req.user = user;
     next();
   } catch (err) {
-    res.status(401).json({ message: 'Invalid or expired token' });
+    console.error('JWT verification error:', err);
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
-const authorize = (requiredPermissions = []) => {
-  return (req, res, next) => {
-    const userPerms = req.user.roles.flatMap(role => role.permissions.map(p => p.name));
-    const hasPermission = requiredPermissions.every(p => userPerms.includes(p));
-
-    if (!hasPermission) return res.status(403).json({ message: 'Forbidden' });
-
-    next();
-  };
-};
-
-module.exports = { authenticate, authorize };
+module.exports = authMiddleware;

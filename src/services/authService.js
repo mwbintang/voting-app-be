@@ -22,7 +22,7 @@ const register = async (userData) => {
 
   await newUser.save();
 
-  const token = generateToken(newUser._id, newUser.roles);
+  const token = generateToken(newUser._id, newUser.role);
   return { message: 'User registered successfully', token };
 };
 
@@ -30,7 +30,7 @@ const login = async (userData) => {
   const { email, password } = userData;
 
   // Find the user by email
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email, isDeleted: false });
   if (!user) {
     throw new Error('Invalid credentials');
   }
@@ -42,7 +42,7 @@ const login = async (userData) => {
   }
 
   // Generate JWT token on successful login
-  const token = generateToken(user._id, user.roles);
+  const token = generateToken(user._id, user.role);
   return { message: 'Login successful', token };
 };
 
