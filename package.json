@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --detectOpenHandles",
+    "test:coverage": "jest --coverage",
     "start": "nodemon bin/www",
     "seed": "node src/seeders/seed.js"
   },
@@ -19,6 +20,8 @@
     "mongoose": "^8.14.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.10",
+    "supertest": "^7.1.0"
   }
 }

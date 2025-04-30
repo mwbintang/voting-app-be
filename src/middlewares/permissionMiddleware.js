@@ -1,7 +1,7 @@
 const Role = require('../models/Role');  // Import Role model
 
 // Middleware to check if user has required permissions
-const authorize = (requiredPermissions = []) => {
+const permissionMiddleware = (requiredPermissions = []) => {
   return async (req, res, next) => {
     try {
       // Assuming req.user contains the user information after authentication
@@ -26,4 +26,4 @@ const authorize = (requiredPermissions = []) => {
   };
 };
 
-module.exports = authorize;
+module.exports = permissionMiddleware;

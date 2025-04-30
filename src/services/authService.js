@@ -1,6 +1,7 @@
 const { hashPassword, comparePassword } = require('../helpers/bcrypt');
 const { generateToken, verifyToken } = require('../helpers/jwt');
 const User = require('../models/User');
+const Role = require('../models/Role');
 
 const register = async (userData) => {
   const { name, email, password } = userData;
@@ -14,10 +15,13 @@ const register = async (userData) => {
   // Hash password before saving
   const hashedPassword = await hashPassword(password);
 
+  const role = await Role.findOne({ name: "user" })
+
   const newUser = new User({
-    name,
+    username: name,
     email,
     password: hashedPassword,
+    role:role._id
   });
 
   await newUser.save();
