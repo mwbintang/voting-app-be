@@ -1,22 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { authenticate, authorize } = require('../middlewares/authMiddleware');
+const userController = require('../controllers/userController');
+const authMiddleware = require('../middlewares/authMiddleware');
+const authorize = require('../middlewares/permissionMiddleware'); // renamed for clarity
 
-router.get('/profile', authenticate, (req, res) => {
-  res.json({
-    message: 'This is a protected route',
-    user: {
-      id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      roles: req.user.roles.map(r => r.name)
-    }
-  });
-});
+// All routes below require login
+router.use(authMiddleware);
 
-// Example admin-only route
-router.get('/admin-only', authenticate, authorize(['manage_users']), (req, res) => {
-  res.json({ message: 'Only admin can access this route' });
-});
+// Submit a vote (requires "create_vote" permission)
+router.post('/vote', authorize(['create_vote']), userController.submitVote);
+
+// Get vote stats (requires "view_votes" permission)
+router.get('/votes', authorize(['view_votes']), userController.getVotes);
 
 module.exports = router;

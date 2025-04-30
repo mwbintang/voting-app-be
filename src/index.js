@@ -15,6 +15,10 @@ app.get('/', (req, res) => {
 
 app.use('/api', routes);
 
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
 connectDB();
 
 module.exports = app;
