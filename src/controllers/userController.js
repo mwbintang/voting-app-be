@@ -4,17 +4,17 @@ const submitVote = async (req, res) => {
   const { candidateName } = req.body;
 
   try {
-    const vote = await userService.submitVote(req.user._id, candidateName);
-    res.status(201).json({ message: 'Vote submitted successfully', vote });
+    const result = await userService.submitVote(req.user._id, candidateName);
+    res.status(201).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
 };
 
-const getVotes = async (req, res) => {
+const getCandidates = async (req, res) => {
   try {
-    const stats = await userService.getVoteStats();
-    res.status(200).json({ candidates: stats });
+    const result = await userService.getCandidates(req.user._id);
+    res.status(200).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }
@@ -22,5 +22,5 @@ const getVotes = async (req, res) => {
 
 module.exports = {
   submitVote,
-  getVotes
+  getCandidates
 };

@@ -13,11 +13,11 @@ const submitVote = async (userId, candidateName) => {
         let candidate = await Candidate.findOne({ name: candidateName });
 
         if (!candidate) {
-            candidate = await Candidate.create({ name: candidateName });
+            candidate = await Candidate.create({ name: candidateName, isCustom: true });
         }
 
         // Create the vote
-        const vote = await Vote.create({
+        await Vote.create({
             userId,
             candidateId: candidate._id,
         });
@@ -27,23 +27,32 @@ const submitVote = async (userId, candidateName) => {
             $inc: { votes: 1 },
         });
 
-        return vote;
+        return { message: 'Vote submitted successfully' };
     } catch (err) {
         throw new Error(err.message || 'Error submitting vote');
     }
 };
 
-const getVoteStats = async () => {
+const getCandidates = async (userId) => {
     try {
-        // Get all candidates and their vote counts
-        const candidates = await Candidate.find({}).sort({ votes: -1 });
-        return candidates;
+        const candidates = await Candidate.find({}).select("_id name isCustom").lean();
+
+        // Get the vote for this user (assuming one vote per user)
+        const vote = await Vote.findOne({ userId: userId });
+
+        // Add `isPick: true` if the candidate matches the voted candidate
+        const enrichedCandidates = candidates.map(candidate => ({
+            ...candidate,
+            isPick: vote && vote.candidateId.toString() === candidate._id.toString()
+        }));
+
+        return enrichedCandidates;
     } catch (err) {
-        throw new Error('Error fetching vote stats');
+        throw new Error('Error fetching candidates');
     }
 };
 
 module.exports = {
     submitVote,
-    getVoteStats
+    getCandidates
 };
