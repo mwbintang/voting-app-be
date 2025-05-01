@@ -21,7 +21,10 @@ const seedRBACAndVotes = async () => {
       { name: 'view_users' },
       { name: 'view_all_votes' },
       { name: 'view_candidates' },
-      { name: 'delete_user' }
+      { name: 'delete_user' },
+      { name: 'add_candidate' },
+      { name: 'delete_candidate' },
+      { name: 'change_role_user' }
     ]);
 
     const getPermissionId = (name) => permissions.find(p => p.name === name)._id;
@@ -34,6 +37,9 @@ const seedRBACAndVotes = async () => {
         getPermissionId('view_all_votes'),
         getPermissionId('view_candidates'),
         getPermissionId('delete_user'),
+        getPermissionId('add_candidate'),
+        getPermissionId('delete_candidate'),
+        getPermissionId('change_role_user'),
       ],
     });
 
