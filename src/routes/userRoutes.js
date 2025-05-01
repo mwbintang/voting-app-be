@@ -11,6 +11,6 @@ router.use(authMiddleware);
 router.post('/vote', permissionMiddleware(['create_vote']), userController.submitVote);
 
 // Get vote stats (requires "view_votes" permission)
-router.get('/votes', permissionMiddleware(['view_votes']), userController.getVotes);
+router.get('/candidates', permissionMiddleware(['view_votes']), userController.getCandidates);
 
 module.exports = router;
