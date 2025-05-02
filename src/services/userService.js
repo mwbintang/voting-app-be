@@ -48,7 +48,7 @@ const getCandidates = async (userId) => {
         // Add `isPick: true` if the candidate matches the voted candidate
         const enrichedCandidates = candidates.map(candidate => ({
             ...candidate,
-            isPick: vote && vote.candidateId.toString() === candidate._id.toString()
+            isPick: vote && vote.candidateId.toString() === candidate._id.toString() || false
         }));
 
         return enrichedCandidates;

@@ -24,12 +24,31 @@ describe('Auth Service', () => {
 
       const mockRole = { _id: 'roleId123', name: 'user' };
 
-      // Mock behavior
-      User.findOne.mockResolvedValue(null);
+      User.findOne.mockResolvedValue(null); // User doesn't exist
       Role.findOne.mockResolvedValue(mockRole);
       hashPassword.mockResolvedValue('hashedPassword123');
+
+      const mockUserId = 'userId123';
+
       const mockSave = jest.fn().mockResolvedValue();
-      User.mockImplementation(() => ({ save: mockSave, _id: 'userId123', role: mockRole._id }));
+      const mockUserInstance = {
+        _id: mockUserId,
+        save: mockSave,
+      };
+
+      User.mockImplementation(() => mockUserInstance);
+
+      const mockPopulatedUser = {
+        _id: mockUserId,
+        username: mockUserData.name,
+        email: mockUserData.email,
+        role: { _id: mockRole._id, name: mockRole.name }
+      };
+
+      User.findById = jest.fn().mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockPopulatedUser)
+      });
+
       generateToken.mockReturnValue('mocked-jwt-token');
 
       const result = await authService.register(mockUserData);
@@ -37,10 +56,16 @@ describe('Auth Service', () => {
       expect(User.findOne).toHaveBeenCalledWith({ email: mockUserData.email });
       expect(Role.findOne).toHaveBeenCalledWith({ name: 'user' });
       expect(hashPassword).toHaveBeenCalledWith(mockUserData.password);
-      expect(mockSave).toHaveBeenCalled();
-      expect(generateToken).toHaveBeenCalledWith('userId123', mockRole._id);
+      expect(User.findById).toHaveBeenCalledWith(mockUserId);
+      expect(generateToken).toHaveBeenCalledWith(mockUserId, mockRole);
       expect(result).toEqual({
         message: 'User registered successfully',
+        user: {
+          _id: mockUserId,
+          username: 'Test User',
+          email: 'test@example.com',
+          role: 'user'
+        },
         token: 'mocked-jwt-token',
       });
     });
@@ -60,13 +85,16 @@ describe('Auth Service', () => {
     it('should login successfully with correct credentials', async () => {
       const mockUser = {
         _id: 'userId123',
+        username: 'Test User',
         email: 'test@example.com',
         password: 'hashedPassword123',
-        role: 'roleId123',
+        role: { _id: 'roleId123', name: 'user' },
         isDeleted: false,
       };
 
-      User.findOne.mockResolvedValue(mockUser);
+      User.findOne.mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockUser)
+      });
       comparePassword.mockResolvedValue(true);
       generateToken.mockReturnValue('mocked-jwt-token');
 
@@ -77,15 +105,23 @@ describe('Auth Service', () => {
 
       expect(User.findOne).toHaveBeenCalledWith({ email: 'test@example.com', isDeleted: false });
       expect(comparePassword).toHaveBeenCalledWith('password123', 'hashedPassword123');
-      expect(generateToken).toHaveBeenCalledWith('userId123', 'roleId123');
+      expect(generateToken).toHaveBeenCalledWith(mockUser._id, mockUser.role);
       expect(result).toEqual({
         message: 'Login successful',
         token: 'mocked-jwt-token',
+        user: {
+          _id: 'userId123',
+          username: 'Test User',
+          email: 'test@example.com',
+          role: 'user'
+        }
       });
     });
 
     it('should throw error if user is not found', async () => {
-      User.findOne.mockResolvedValue(null);
+      User.findOne.mockReturnValue({
+        populate: jest.fn().mockResolvedValue(null)
+      });
 
       await expect(authService.login({
         email: 'test@example.com',
@@ -95,12 +131,17 @@ describe('Auth Service', () => {
 
     it('should throw error if password does not match', async () => {
       const mockUser = {
+        _id: 'userId123',
+        username: 'Test User',
         email: 'test@example.com',
         password: 'hashedPassword123',
+        role: { name: 'user' },
         isDeleted: false,
       };
 
-      User.findOne.mockResolvedValue(mockUser);
+      User.findOne.mockReturnValue({
+        populate: jest.fn().mockResolvedValue(mockUser)
+      });
       comparePassword.mockResolvedValue(false);
 
       await expect(authService.login({

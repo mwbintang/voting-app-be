@@ -12,24 +12,22 @@ const mockResponse = () => {
 
 describe('User Controller', () => {
   describe('submitVote', () => {
-    it('should return 201 and success message when vote is submitted', async () => {
+    it('should return 201 with result when vote is submitted', async () => {
       const mockVote = { candidate: 'Alice', user: 'user123' };
       userService.submitVote.mockResolvedValue(mockVote);
 
       const req = {
         user: { _id: 'user123' },
-        body: { candidateName: 'Alice' }
+        body: { candidateName: 'Alice' },
+        app: { get: jest.fn().mockReturnValue({}) } // mock io
       };
       const res = mockResponse();
 
       await userController.submitVote(req, res);
 
-      expect(userService.submitVote).toHaveBeenCalledWith('user123', 'Alice');
+      expect(userService.submitVote).toHaveBeenCalledWith('user123', 'Alice', {});
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Vote submitted successfully',
-        vote: mockVote
-      });
+      expect(res.json).toHaveBeenCalledWith(mockVote);
     });
 
     it('should return 400 if vote submission fails', async () => {
@@ -37,7 +35,8 @@ describe('User Controller', () => {
 
       const req = {
         user: { _id: 'user123' },
-        body: { candidateName: 'Bob' }
+        body: { candidateName: 'Bob' },
+        app: { get: jest.fn().mockReturnValue({}) }
       };
       const res = mockResponse();
 
@@ -48,34 +47,35 @@ describe('User Controller', () => {
     });
   });
 
-  describe('getVotes', () => {
-    it('should return 200 with vote statistics', async () => {
-      const stats = [
-        { candidate: 'Alice', votes: 10 },
-        { candidate: 'Bob', votes: 5 }
-      ];
-      userService.getVoteStats.mockResolvedValue(stats);
+  describe('getCandidates', () => {
+    it('should return 200 with candidates', async () => {
+      const mockCandidates = [{ name: 'Alice' }, { name: 'Bob' }];
+      userService.getCandidates.mockResolvedValue(mockCandidates);
 
-      const req = {};
+      const req = {
+        user: { _id: 'user123' }
+      };
       const res = mockResponse();
 
-      await userController.getVotes(req, res);
+      await userController.getCandidates(req, res);
 
-      expect(userService.getVoteStats).toHaveBeenCalled();
+      expect(userService.getCandidates).toHaveBeenCalledWith('user123');
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ candidates: stats });
+      expect(res.json).toHaveBeenCalledWith(mockCandidates);
     });
 
-    it('should return 400 if getVotes fails', async () => {
-      userService.getVoteStats.mockRejectedValue(new Error('Stats error'));
+    it('should return 400 if fetching candidates fails', async () => {
+      userService.getCandidates.mockRejectedValue(new Error('Get candidates error'));
 
-      const req = {};
+      const req = {
+        user: { _id: 'user123' }
+      };
       const res = mockResponse();
 
-      await userController.getVotes(req, res);
+      await userController.getCandidates(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Stats error' });
+      expect(res.json).toHaveBeenCalledWith({ message: 'Get candidates error' });
     });
   });
 });
