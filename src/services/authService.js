@@ -24,10 +24,10 @@ const register = async (userData) => {
     role: role._id
   });
 
-  // Populate role before sending to client
+  await newUser.save();
   const populatedUser = await User.findById(newUser._id).populate("role", "name");
-
   const token = generateToken(populatedUser._id, populatedUser.role);
+
   return {
     message: 'User registered successfully',
     user: {
