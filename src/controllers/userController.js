@@ -4,7 +4,8 @@ const submitVote = async (req, res) => {
   const { candidateName } = req.body;
 
   try {
-    const result = await userService.submitVote(req.user._id, candidateName);
+    const io = req.app.get('io');
+    const result = await userService.submitVote(req.user._id, candidateName, io);
     res.status(201).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });

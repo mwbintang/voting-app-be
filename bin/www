@@ -1,18 +1,16 @@
+const { normalizePort } = require('../src/utils/port');
+
 const http = require('http');
-const app = require('../src/index'); // or '../app' if you used app.js
-
-const PORT = normalizePort(process.env.PORT || '5000');
-app.set('port', PORT);
-
+const app = require('../src');
 const server = http.createServer(app);
 
-server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-});
+const PORT = normalizePort(process.env.PORT || '5000');
 
-function normalizePort(val) {
-  const port = parseInt(val, 10);
-  if (isNaN(port)) return val;
-  if (port >= 0) return port;
-  return false;
-}
+// Initialize socket
+const initSocket = require('../src/socket');
+const io = initSocket(server);
+
+// Make io available in routes/controllers
+app.set('io', io);
+
+server.listen(PORT);
