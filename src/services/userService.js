@@ -1,7 +1,7 @@
 const Vote = require('../models/Vote');
 const Candidate = require('../models/Candidate');
 
-const submitVote = async (userId, candidateName) => {
+const submitVote = async (userId, candidateName, io) => {
     try {
         // Check if the user has already voted
         const existingVote = await Vote.findOne({ userId });
@@ -26,6 +26,9 @@ const submitVote = async (userId, candidateName) => {
         await Candidate.findByIdAndUpdate(candidate._id, {
             $inc: { votes: 1 },
         });
+
+        // Emit to all connected clients via socket.io
+        io.emit('voteUpdated', { message: 'A new vote has been submitted' });
 
         return { message: 'Vote submitted successfully' };
     } catch (err) {
