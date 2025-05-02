@@ -6,8 +6,7 @@
   "scripts": {
     "test": "jest --detectOpenHandles",
     "test:coverage": "jest --coverage",
-    "start": "node src/server.js",
-    "start:dev": "nodemon bin/www",
+    "start": "nodemon bin/www",
     "seed": "node src/seeders/seed.js"
   },
   "author": "",
