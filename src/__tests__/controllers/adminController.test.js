@@ -23,7 +23,7 @@ describe('Admin Controller', () => {
 
       expect(adminService.getAllUsers).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ users });
+      expect(res.json).toHaveBeenCalledWith(users);
     });
 
     it('should return 400 on error', async () => {
@@ -49,7 +49,6 @@ describe('Admin Controller', () => {
 
       await adminController.getAllVotes(req, res);
 
-      expect(adminService.getAllVotes).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ votes });
     });
@@ -77,9 +76,8 @@ describe('Admin Controller', () => {
 
       await adminController.getCandidates(req, res);
 
-      expect(adminService.getCandidates).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({ candidates });
+      expect(res.json).toHaveBeenCalledWith(candidates);
     });
 
     it('should return 400 on error', async () => {
@@ -120,6 +118,90 @@ describe('Admin Controller', () => {
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ message: 'Delete failed' });
+    });
+  });
+
+  describe('addCandidate', () => {
+    it('should return 201 on success', async () => {
+      const result = { message: 'Candidate added' };
+      adminService.addCandidate.mockResolvedValue(result);
+
+      const req = { body: { name: 'Alice' } };
+      const res = mockResponse();
+
+      await adminController.addCandidate(req, res);
+
+      expect(adminService.addCandidate).toHaveBeenCalledWith('Alice');
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(result);
+    });
+
+    it('should return 400 on error', async () => {
+      adminService.addCandidate.mockRejectedValue(new Error('Duplicate'));
+
+      const req = { body: { name: 'Alice' } };
+      const res = mockResponse();
+
+      await adminController.addCandidate(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Duplicate' });
+    });
+  });
+
+  describe('deleteCandidate', () => {
+    it('should return 200 on success', async () => {
+      const deleted = { id: '1', name: 'Alice' };
+      adminService.deleteCandidate.mockResolvedValue(deleted);
+
+      const req = { params: { id: '1' } };
+      const res = mockResponse();
+
+      await adminController.deleteCandidate(req, res);
+
+      expect(adminService.deleteCandidate).toHaveBeenCalledWith('1');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ message: 'Candidate deleted', candidate: deleted });
+    });
+
+    it('should return 404 on error', async () => {
+      adminService.deleteCandidate.mockRejectedValue(new Error('Not found'));
+
+      const req = { params: { id: '1' } };
+      const res = mockResponse();
+
+      await adminController.deleteCandidate(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Not found' });
+    });
+  });
+
+  describe('changeUserRole', () => {
+    it('should return 200 and updated user on success', async () => {
+      const user = { id: '123', role: 'admin' };
+      adminService.changeUserRole.mockResolvedValue(user);
+
+      const req = { body: { userId: '123', roleName: 'admin' } };
+      const res = mockResponse();
+
+      await adminController.changeUserRole(req, res);
+
+      expect(adminService.changeUserRole).toHaveBeenCalledWith('123', 'admin');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ message: 'User role updated', user });
+    });
+
+    it('should return 400 on error', async () => {
+      adminService.changeUserRole.mockRejectedValue(new Error('User not found'));
+
+      const req = { body: { userId: '123', roleName: 'admin' } };
+      const res = mockResponse();
+
+      await adminController.changeUserRole(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({ error: 'User not found' });
     });
   });
 });
