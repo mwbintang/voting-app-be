@@ -1,5 +1,6 @@
 const Vote = require('../models/Vote');
 const Candidate = require('../models/Candidate');
+const adminService = require('./adminService');
 
 const submitVote = async (userId, candidateName, io) => {
     try {
@@ -28,7 +29,8 @@ const submitVote = async (userId, candidateName, io) => {
         });
 
         // Emit to all connected clients via socket.io
-        io.emit('voteUpdated', { message: 'A new vote has been submitted' });
+        const candidateData = await adminService.getCandidates()
+        io.emit('voteUpdated', { message: 'A new vote has been submitted', candidate: candidateData });
 
         return { message: 'Vote submitted successfully' };
     } catch (err) {
